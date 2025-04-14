@@ -1,6 +1,6 @@
 BUILD_DIR   ?= build
 
-OUTFILE      = tetris.caq
+OUTFILE      = galaxian.caq
 OUT          = $(BUILD_DIR)/$(OUTFILE)
 
 INC_DIRS    += . lib

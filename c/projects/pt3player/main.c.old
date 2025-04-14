@@ -3,7 +3,7 @@ PT3 Player (SDCC version)
 by Frank van den Hoef
 
 Abstract -
-PT3 Player builds on the original application design from Bruce Abbott for the Aquarius Micro Expander for an easy-cd-use AY music player, allowing users to easily navigate the folders of PT3 files and simply start playing music. It featured a simple "equalizer" visualization that reacted to the amplitude value for each of the music tracks. The new version for the Aquarius+ rewrites the original Z80 assembly code as C code, designed for the SDCC compiler, and reworks the CH376 USB interface code to utilize the Aquarius+ ESP32-managed SD card storage.
+PT3 Player builds on the original application design from Bruce Abbott for the Aquarius Micro Expander for an easy-to-use AY music player, allowing users to easily navigate the folders of PT3 files and simply start playing music. It featured a simple "equalizer" visualization that reacted to the amplitude value for each of the music tracks. The new version for the Aquarius+ rewrites the original Z80 assembly code as C code, designed for the SDCC compiler, and reworks the CH376 USB interface code to utilize the Aquarius+ ESP32-managed SD card storage.
 
 Revision History -
 2023-07-16 - v0.1  - Initial version, FvdH
@@ -15,7 +15,6 @@ Revision History -
 
 // Here we're defining our "global" program variables, used in many of the functions/methods below.
 static struct esp_stat st;                       // This custom data structure is used to hold the STATUS of the ESP32 SD device
-static uint8_t         startdir[64];             // This holds the starting directory path
 static uint8_t         filename[64];             // This array of unsigned 8-bit integers stores the characters of the filename for the current song
 static uint8_t        *tram = (uint8_t *)0x3000; // This is a pointer to the RAM location for the CHARRAM, referenced by offset from the starting point
 static uint8_t        *cram = (uint8_t *)0x3400; // This is a pointer to the RAM location for the COLRAM, referenced by offset from the starting point
@@ -39,17 +38,11 @@ static void draw_str2(const char *str, int8_t max_size) {
 }
 
 // This function draws a blank application "window" to Aquarius+ screen RAM.
-static void draw_window(const char *path) {      // Take the pathname as a series of chars.
-    tp             = tram;                       // Set the text position to the start of CHARRAM.
-    cp             = cram;                       // Set the color position to the start of COLRAM.
-    col            = 0x60;                       // Set the color to BG = BLACK, FG = CYAN.
-    uint8_t border = 0x60;                       // Set the border to BG = BLACK, FG = CYAN.
-    uint8_t datadir[64];                         // This holds the data directory path
-    uint8_t playSCR[20] = "data/pt3_play.scr";   // This holds the playscreen path
-
-    strcat(datadir, playSCR);
-    
-    // load_binary(datadir, tram, 0x0800);
+static void draw_window(const char *path) { // Take the pathname as a series of chars.
+    tp             = tram;                  // Set the text position to the start of CHARRAM.
+    cp             = cram;                  // Set the color position to the start of COLRAM.
+    col            = 0x60;                  // Set the color to BG = BLACK, FG = CYAN.
+    uint8_t border = 0x60;                  // Set the border to BG = BLACK, FG = CYAN.
 
     *(tp++) = ' ';  // Put a SPACE char into the text position and increment. This also sets the BORDER character.
     *(tp++) = '<';  // Put a < char into the text position and increment.
@@ -64,7 +57,6 @@ static void draw_window(const char *path) {      // Take the pathname as a serie
         *(cp++) = col;       // ...filling it with CYAN on BLACK (set above)...
     }                        // ...and also loop until it's the end of the top line of COLOR.
 
-    // This next section is the manual drawing of the screen
     tp = tram + 40; // Reset the text position to the start of the second row.
     cp = cram + 40; // Reset the color position to the start of the second row.
 
@@ -178,7 +170,7 @@ static void scandir(void) {
     esp_closedir(dd);
 
     tp = tram + 23 * 40 + 2;
-    draw_str(" 0-Z = play : RTN = dir up : . = Exit");
+    draw_str("0-Z = select file    RTN = dir up");
 }
 
 static void getfile(int idx) {
@@ -198,7 +190,7 @@ static uint8_t playsong(void) {
 
     draw_window(filename);
     tp = tram + 23 * 40 + 2;
-    draw_str("       SPC = next : RTN = stop");
+    draw_str("SPACE = next song    RTN = stop song");
 
     uint8_t result = KEY_SPACE;
 
@@ -272,7 +264,6 @@ static uint8_t playsong(void) {
 }
 
 int main(void) {
-    esp_getcwd(startdir, sizeof(startdir));
     while (1) {
         scandir();
 
@@ -287,13 +278,6 @@ int main(void) {
             }
 
             ch = toupper(ch);
-
-            // Exit program
-            if (ch == '.') {
-                esp_chdir(startdir);
-                clearScreen();
-                return 0;
-            }
 
             uint8_t idx = 0xFF;
             if (ch >= '0' && ch <= '9')
@@ -318,15 +302,5 @@ int main(void) {
             }
         }
     }
-}
-
-static void clearScreen() {
-    tp             = tram;                       // Set the text position to the start of CHARRAM.
-    cp             = cram;                       // Set the color position to the start of COLRAM.
-    col            = 0x06;                       // Set the color to FG = BLACK, BG = CYAN.
-
-    for (int i = 0;i<1000;i++) {
-        *(tp++) = ' ';  // Put a SPACE char into the text position and increment. This also sets the BORDER character.
-        *(cp++) = col;  // Put BLK on CYN color
-    }
+    return 0;
 }
