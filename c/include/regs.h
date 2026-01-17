@@ -204,7 +204,7 @@ enum {
     SYSCTRL_TURBO_EN        = (1 << 2), // Turbo mode (7.16MHz)
     SYSCTRL_TURBO_UNLIMITED = (1 << 3), // Unlimited turbo speed
     // Bits 4-6 unused
-    SYSCTRL_BIT7            = (1 << 7), // Reset system (use SYSCTRL_RESET_SYSTEM / SYSCTRL_WAS_BOOT_WARM)
+    SYSCTRL_BIT7            = (1 << 7), // Reset system (use SYSCTRL_RESET_SYSTEM / SYSCTRL_WAS_RESET_WARM)
 };
 
 #define SYSCTRL_RESET_SYSTEM    (SYSCTRL_BIT7) // W1:Reset system
